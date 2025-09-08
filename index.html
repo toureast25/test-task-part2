@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>База знаний</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            display: flex;
+            min-height: 500px;
+        }
+
+        .column {
+            border-right: 1px solid #ddd;
+            background-color: #fafafa;
+        }
+
+        .column:last-child {
+            border-right: none;
+        }
+
+        .column-header {
+            background-color: #e8e8e8;
+            padding: 15px;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tema-column {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .podtema-column {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .content-column {
+            flex: 2;
+            min-width: 300px;
+            background-color: white;
+        }
+
+        .item {
+            padding: 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s ease;
+        }
+
+        .item:hover {
+            background-color: #f0f0f0;
+        }
+
+        .item.selected {
+            background-color: #ffff99 !important;
+            font-weight: bold;
+        }
+
+        .content-text {
+            padding: 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .empty-state {
+            color: #888;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .column {
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>База знаний</h1>
+        </div>
+        
+        <div class="content">
+            <!-- Колонка Тема -->
+            <div class="column tema-column">
+                <div class="column-header">Тема</div>
+                <div class="item tema-item selected" data-tema="1">Тема 1</div>
+                <div class="item tema-item" data-tema="2">Тема 2</div>
+            </div>
+            
+            <!-- Колонка Подтема -->
+            <div class="column podtema-column">
+                <div class="column-header">Подтема</div>
+                <div id="podtema-list">
+                    <!-- Подтемы будут загружаться динамически -->
+                </div>
+            </div>
+            
+            <!-- Колонка Содержимое -->
+            <div class="column content-column">
+                <div class="column-header">Содержимое</div>
+                <div class="content-text" id="content-text">
+                    <!-- Содержимое будет загружаться динамически -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Данные для базы знаний
+        const knowledgeBase = {
+            "1": {
+                title: "Тема 1",
+                subtopics: {
+                    "1.1": "Подтема 1.1",
+                    "1.2": "Подтема 1.2", 
+                    "1.3": "Подтема 1.3"
+                }
+            },
+            "2": {
+                title: "Тема 2", 
+                subtopics: {
+                    "2.1": "Подтема 2.1",
+                    "2.2": "Подтема 2.2",
+                    "2.3": "Подтема 2.3"
+                }
+            }
+        };
+
+        // Текущее состояние
+        let currentTema = "1";
+        let currentPodtema = "1.1";
+
+        // Функция для загрузки подтем
+        function loadPodtemas(temaId) {
+            const podtemaList = document.getElementById('podtema-list');
+            podtemaList.innerHTML = '';
+            
+            const tema = knowledgeBase[temaId];
+            if (tema) {
+                Object.keys(tema.subtopics).forEach((podtemaId, index) => {
+                    const podtemaDiv = document.createElement('div');
+                    podtemaDiv.className = 'item podtema-item';
+                    podtemaDiv.setAttribute('data-podtema', podtemaId);
+                    podtemaDiv.textContent = tema.subtopics[podtemaId];
+                    
+                    // Выделяем первую подтему при загрузке новой темы
+                    if (index === 0) {
+                        podtemaDiv.classList.add('selected');
+                        currentPodtema = podtemaId;
+                    }
+                    
+                    podtemaDiv.addEventListener('click', function() {
+                        selectPodtema(podtemaId);
+                    });
+                    
+                    podtemaList.appendChild(podtemaDiv);
+                });
+            }
+        }
+
+        // Функция для обновления содержимого
+        function updateContent() {
+            const contentText = document.getElementById('content-text');
+            contentText.textContent = `Некий текст, привязанный к ${knowledgeBase[currentTema].subtopics[currentPodtema]}`;
+        }
+
+        // Функция для выбора темы
+        function selectTema(temaId) {
+            // Убираем выделение с предыдущей темы
+            document.querySelectorAll('.tema-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Выделяем новую тему
+            document.querySelector(`[data-tema="${temaId}"]`).classList.add('selected');
+            
+            currentTema = temaId;
+            
+            // Загружаем подтемы для новой темы
+            loadPodtemas(temaId);
+            
+            // Обновляем содержимое
+            updateContent();
+        }
+
+        // Функция для выбора подтемы
+        function selectPodtema(podtemaId) {
+            // Убираем выделение с предыдущей подтемы
+            document.querySelectorAll('.podtema-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Выделяем новую подтему
+            document.querySelector(`[data-podtema="${podtemaId}"]`).classList.add('selected');
+            
+            currentPodtema = podtemaId;
+            
+            // Обновляем содержимое
+            updateContent();
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Добавляем обработчики событий для тем
+            document.querySelectorAll('.tema-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const temaId = this.getAttribute('data-tema');
+                    selectTema(temaId);
+                });
+            });
+            
+            // Загружаем начальное состояние
+            loadPodtemas(currentTema);
+            updateContent();
+        });
+    </script>
+</body>
+</html>
